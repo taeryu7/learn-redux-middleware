@@ -1,0 +1,72 @@
+리덕스 미들웨어
+리덕스 미들웨어는 리덕스가 지니고 있는 핵심 기능으로, Context API 또는 MobX를 사용하는것과 차별화가 되는 부분이다.
+
+액션 → 미들웨어 → 리듀서 → 스토어
+리덕스 미들웨어를 사용하면 액션이 디스패치 된 다음, 리듀서에서 해당 액션을 받아와서 업데이트하기 전에 추가적인 작업을 할 수 있다.
+
+여기서 언급한 추가적인 작업들은 아래와 같은것들이 있다.
+▷ 특정 조건에 따라 액션이 무시되게 만들 수 있다.
+▷ 액션을 콘솔에 출력하거나, 서버쪽에 로깅을 할 수 있다.
+▷ 액션이 디스패치 됐을 때 이를 수정해서 리듀서에게 전달되도록 할 수 있다.
+▷ 특정 액션이 발생했을 때 이에 기반하여 다른 액션이 발생되도록 할 수 있다.
+▷ 특정 액션이 발생했을 때 특정 자바스크립트 함수를 실행시킬 수 있다.
+
+보통 리덕스에서 미들웨어를 사용하는 주된 사용 용도는 비동기 작업을 처리 할 때다.
+예로 리액트앱에서 만약 백엔드 API를 연동해야된다면, 리덕스 미들웨어를 사용해서 처리를한다.
+
+리덕스 미들웨어는 누구드닞 만들어서 사용 할 수 있지만, 일반적으로 리덕스 미들웨어 라이브러리를 설치해서 사용한다.
+비동기작업에 관련된 미들웨어 라이브러리는 아래에 이름과 링크가 있다.
+redux-thunk → https://github.com/reduxjs/redux-thunk
+redux-saga → https://github.com/redux-saga/redux-saga
+redux-observable → https://redux-observable.js.org/
+redux-promise-middleware  → https://www.npmjs.com/package/redux-promise-middleware
+
+이 외에도 다른 라이브러리들이 있지만 많이 쓰는것들은 위에 네개가 대표적이다.
+
+redux-saga와 redux-observable의 경우엔 특정 액션을 모니터링 할 수도 있어서 특정 액션이 디스패치됐을때 원하는 함수를 호출하거나 라우터를 통해 다른주소로 이동하는게 가능하다.
+
+$ npx create-react-app learn-redux-middleware
+$ yarn add redux react-redux
+
+
+2. 미들웨어
+실무에서 리덕스 미들웨어를 직접 만들일은 거의 없다. 직접 만들어보면 미들웨어가 어떤 역할을 하는지 이해하기 쉬워진다.
+
+리덕스 미들웨어의 템플릿
+리덕스 미들웨어를 만들 때 아래 템플릿을 사용한다
+https://redux.js.org/tutorials/fundamentals/part-4-store#middleware
+const middleware = store => next => action => {
+  // 하고 싶은 작업...
+}
+
+미들웨어도 하나의 함수로, 함수를 연달아서 두번 리턴하는 함수다.
+function middleware(store) {
+  return function (next) {
+    return function (action) {
+      // 하고 싶은 작업...
+    };
+  };
+};
+각 함수에서 받아오는 파라미터가 어떤 것을 의미하는지 알아봐야 한다.
+
+1. store는 리덕스 스토어 인스턴스로 이 안에는 dispatch, getState, subscribe 내장함수들이 들어있다.
+
+2. next 는 액션을 다음 미들웨어에게 전달하는 함수다. next(action) 이런 형태로 사용한다.
+만약 다음 미들웨어가 없다면 리듀서에게 액션을 전달해준다. 만약 next를 호출하지 않게된다면 액션이 무시처리되서 리듀서에게 전달되지 않는다.
+
+3. action은 현재 처리하고있는 액션객체다
+      ↙ ← store.dispatch
+     ↓     ↑
+액션 → 미들웨어1 → next → 미들웨어2
+                            ↓
+                           next
+                            ↓
+                          리듀서
+                            ↓
+                          스토어
+
+미들웨어는 ↑ 위와 같은 구조로 ↑ 작동한다. 리덕스 스토어에는 여러개의 미들웨어를 등록 할 수 있다.
+새로운 액션이 디스패치 되면 첫 번째로 등록한 미들웨어가 호출된다. 만약 미들웨어에서 next(action)을 호출하게 되면 다음 미들웨어로 액션이 넘어간다.
+또한 미들웨어에서 store.dispatch 를 사용하면 다른 액션을 추가적으로 발생시킬 수 있다.
+
+
