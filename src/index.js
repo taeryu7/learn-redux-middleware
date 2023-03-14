@@ -1,4 +1,55 @@
 
+// saga에서 라우터 연동하기
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import * as serviceWorker from './serviceWorker';
+import { createStore, applyMiddleware } from 'redux';
+import { Provider } from 'react-redux';
+import rootReducer, { rootSaga } from './modules';
+import logger from 'redux-logger';
+import { composeWithDevTools } from 'redux-devtools-extension';
+import ReduxThunk from 'redux-thunk';
+import { Router } from 'react-router-dom';
+import { createBrowserHistory } from 'history';
+import createSagaMiddleware from 'redux-saga';
+
+const customHistory = createBrowserHistory();
+const sagaMiddleware = createSagaMiddleware({
+  context: {
+    history: customHistory
+  }
+}); // 사가 미들웨어를 만든다.
+
+const store = createStore(
+  rootReducer,
+  // logger 를 사용하는 경우, logger가 가장 마지막에 와야한다.
+  composeWithDevTools(
+    applyMiddleware(
+      ReduxThunk.withExtraArgument({ history: customHistory }),
+      sagaMiddleware, // 사가 미들웨어를 적용하고
+      logger
+    )
+  )
+); // 여러개의 미들웨어를 적용 할 수 있다.
+
+sagaMiddleware.run(rootSaga); // 루트 사가를 실행해준다.
+// 주의: 스토어 생성이 된 다음에 위 코드를 실행해야한다.
+
+ReactDOM.render(
+  <Router history={customHistory}>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </Router>,
+  document.getElementById('root')
+);
+
+serviceWorker.unregister();
+
+
+/*
 // 리덕스 사가 설치 및 비동기 카운터 만들기
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -43,7 +94,7 @@ ReactDOM.render(
 );
 
 serviceWorker.unregister();
-
+*/
 
 /*
 // thunk에서 라우터 연동하기
