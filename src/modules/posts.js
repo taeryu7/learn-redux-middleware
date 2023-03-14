@@ -1,5 +1,70 @@
-// redux-thunk로 프로미스 다루기
 
+/*
+// 포스트 조회시 재로딩 문제 해결하기
+특정 포스트를 조회하는 과정에서 재로딩 문제를 해결하려면, 방급했던 방식으로 처리 할 수 없다.
+어떤 파라미터가 주어졌냐에 따라 다른 결과물이 있다.
+
+이 문제를 해결하는 두가지 방법이 있다.
+1. 컴포넌트가 언마운트 될 때 포스트 내용을 비우도록 하는것이다.
+
+이 작업을 하려면 posts 리덕스 모듈에 CLEAR_POST 라는 액션을 준비해야한다.
+*/
+import * as postsAPI from '../api/posts'; // api/posts 안의 함수 모두 불러오기
+import {
+  createPromiseThunk,
+  reducerUtils,
+  handleAsyncActions,
+  createPromiseThunkById,
+  handleAsyncActionsById
+} from '../lib/asyncUtils';
+
+// 액션 타입
+
+// 포스트 여러개 조회하기
+const GET_POSTS = 'GET_POSTS'; // 요청 시작
+const GET_POSTS_SUCCESS = 'GET_POSTS_SUCCESS'; // 요청 성공
+const GET_POSTS_ERROR = 'GET_POSTS_ERROR'; // 요청 실패
+
+// 포스트 하나 조회하기
+const GET_POST = 'GET_POST';
+const GET_POST_SUCCESS = 'GET_POST_SUCCESS';
+const GET_POST_ERROR = 'GET_POST_ERROR';
+
+// 아주 쉽게 thunk 함수를 만들 수 있게 되었다.
+export const getPosts = createPromiseThunk(GET_POSTS, postsAPI.getPosts);
+export const getPost = createPromiseThunkById(GET_POST, postsAPI.getPostById);
+
+// initialState 쪽도 반복되는 코드를 initial() 함수를 사용해서 리팩토링 했다.
+const initialState = {
+  posts: reducerUtils.initial(),
+  post: {}
+};
+
+export default function posts(state = initialState, action) {
+  switch (action.type) {
+    case GET_POSTS:
+    case GET_POSTS_SUCCESS:
+    case GET_POSTS_ERROR:
+      return handleAsyncActions(GET_POSTS, 'posts', true)(state, action);
+    case GET_POST:
+    case GET_POST_SUCCESS:
+    case GET_POST_ERROR:
+      return handleAsyncActionsById(GET_POST, 'post', true)(state, action);
+    default:
+      return state;
+  }
+}
+
+// 3번째 인자를 사용하면 withExtraArgument 에서 넣어준 값들을 사용 할 수 있다.
+export const goToHome = () => (dispatch, getState, { history }) => {
+  history.push('/');
+};
+// PostContainer 컴포넌트의 useEffect 의 cleanup 함수 (useEffect 에서 반환하는 함수)에서 해당 액션을 디스패치해주면 된다.
+
+
+
+/*
+// redux-thunk로 프로미스 다루기
 // 리덕스 모듈 리팩토링하기
 import * as postsAPI from '../api/posts'; // api/posts 안의 함수 모두 불러오기
 import { createPromiseThunk, reducerUtils } from '../lib/asyncUtils';
@@ -25,6 +90,20 @@ const initialState = {
   posts: reducerUtils.initial(),
   post: reducerUtils.initial()
 };
+export default function posts(state = initialState, action) {
+  switch (action.type) {
+    case GET_POSTS:
+    case GET_POSTS_SUCCESS:
+    case GET_POSTS_ERROR:
+      return handleAsyncActions(GET_POSTS, 'posts', true)(state, action);
+    case GET_POST:
+    case GET_POST_SUCCESS:
+    case GET_POST_ERROR:
+      return handleAsyncActions(GET_POST, 'post')(state, action);
+    default:
+      return state;
+  }
+}
 
 export default function posts(state = initialState, action) {
   switch (action.type) {
@@ -64,6 +143,7 @@ export default function posts(state = initialState, action) {
 }
 // 아래보다 많이 반복되는 코드가 줄었지만 리듀서쪽에소 여전히 반복되는 코드들이 많이 있다.
 // 이것들도 원한다면 리팩토링 할 수 있다. 
+*/
 
 /*
 // posts 리덕스 모듈 준비하기
