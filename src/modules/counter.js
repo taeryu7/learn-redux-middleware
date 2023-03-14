@@ -1,7 +1,7 @@
 
 
 // 리덕스 사가 설치 및 비동기 카운터 만들기
-import { delay, put } from 'redux-saga/effects';
+import { delay, put, takeEvery, takeLatest } from 'redux-saga/effects';
 
 // 액션 타입
 const INCREASE = 'INCREASE';
@@ -16,15 +16,20 @@ export const increaseAsync = () => ({ type: INCREASE_ASYNC });
 export const decreaseAsync = () => ({ type: DECREASE_ASYNC });
 
 function* increaseSaga() {
-  yield delay(1000); // 1초를 기다립니다.
-  yield put(increase()); // put은 특정 액션을 디스패치 해줍니다.
+  yield delay(1000); // 1초를 기다린다.
+  yield put(increase()); // put은 특정 액션을 디스패치 해준다.
 }
 function* decreaseSaga() {
-  yield delay(1000); // 1초를 기다립니다.
-  yield put(decrease()); // put은 특정 액션을 디스패치 해줍니다.
+  yield delay(1000); // 1초를 기다린다.
+  yield put(decrease()); // put은 특정 액션을 디스패치 해준다.
 }
 
-// 초깃값 (상태가 객체가 아니라 그냥 숫자여도 상관 없습니다.)
+export function* counterSaga() {
+  yield takeEvery(INCREASE_ASYNC, increaseSaga); // 모든 INCREASE_ASYNC 액션을 처리
+  yield takeLatest(DECREASE_ASYNC, decreaseSaga); // 가장 마지막으로 디스패치된 DECREASE_ASYNC 액션만을 처리
+}
+
+// 초깃값 (상태가 객체가 아니라 그냥 숫자여도 상관 없다.)
 const initialState = 0;
 
 export default function counter(state = initialState, action) {
@@ -37,6 +42,7 @@ export default function counter(state = initialState, action) {
       return state;
   }
 }
+// counterSaga 함수의 경우 다른 곳에서 불러와서 사용해야 하기 때문에 export 키워드를 사용한다.
 
 
 
