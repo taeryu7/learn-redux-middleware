@@ -362,3 +362,51 @@ dispatch({ type: GET_POST, payload: 1, meta: 1 })이란 코드가 실행되면 �
 만약 handleAsyncActionsById를 사용하지 않는다면 meta 를 생략해도 된다.
 
 리팩토링을 하지 않을거라면 { type: GET_POST, id } 이런식으로 파라미터를 꼭 payload 라고 설정 할 필요는 없다.
+
+
+// 프로미스를 처리하는 사가 리팩토링
+↓ 아래는 기존에 작성했던 사가함수들이다.
+function* getPostsSaga() {
+  try {
+    const posts = yield call(postsAPI.getPosts); // call 을 사용하면 특정 함수를 호출하고, 결과물이 반환 될 때까지 기다려줄 수 있다.
+    yield put({
+      type: GET_POSTS_SUCCESS,
+      payload: posts
+    }); // 성공 액션 디스패치
+  } catch (e) {
+    yield put({
+      type: GET_POSTS_ERROR,
+      error: true,
+      payload: e
+    }); // 실패 액션 디스패치
+  }
+}
+
+// 액션이 지니고 있는 값을 조회하고 싶다면 action을 파라미터로 받아와서 사용 할 수 있다.
+function* getPostSaga(action) {
+  const param = action.payload;
+  const id = action.meta;
+  try {
+    const post = yield call(postsAPI.getPostById, param); // API 함수에 넣어주고 싶은 인자는 call 함수의 두번째 인자부터 순서대로 넣어주면된다.
+    yield put({
+      type: GET_POST_SUCCESS,
+      payload: post,
+      meta: id
+    });
+  } catch (e) {
+    yield put({
+      type: GET_POST_ERROR,
+      error: true,
+      payload: e,
+      meta: id
+    });
+  }
+}
+
+까다로운 사가 함수를 만들게 될 때에는 사가 함수 안에서 여러 종류의 비동기 작업을 할 수 있다.
+↑ 위에 만든 기능처럼 단순히 하나의 API를 요청해서 결과물을 가지고 액션을 디스패치 하는일이 꽤나 많이 발생하기도 한다.
+
+까다로운 작업을 할 때에는 사가 함수를 직접 작성하고,간단한 비동기 작업을 처리하는 경우 이전에 redux-thunk에서 사용한 
+createPromiseThunk, createPromiseThunkById 를 만들어서 사용했던 것 처럼,
+비슷한 방식으로 반복되는 로직들을 함수화 하여 재사용하면 훨씬 깔끔한 코드로 작성을 할 수 있고, 생산성도 높일 수 있다.
+
